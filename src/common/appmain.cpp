@@ -1,4 +1,4 @@
-//appmain.cpp - arduino-like app start
+// appmain.cpp - arduino-like app start
 
 #include "appmain.hpp"
 #include "app.h"
@@ -15,6 +15,11 @@
 #include "print_utils.hpp"
 #include "sound.hpp"
 #include "language_eeprom.hpp"
+#include "configuration_store.hpp"
+
+#ifdef SIM_HEATER
+    #include "sim_heater.h"
+#endif // SIM_HEATER
 
 #include "marlin_server.h"
 #include "bsod.h"
@@ -34,7 +39,7 @@
     #include "fanctl.h"
     #include "hwio_pindef.h"
 
-//condition to restore autofan after selftest
+// condition to restore autofan after selftest
 static bool restore_autofan() { return marlin_server_get_temp_nozzle() >= EXTRUDER_AUTO_FAN_TEMPERATURE; }
 
 CFanCtl fanCtlPrint = CFanCtl(
@@ -67,7 +72,7 @@ CFanCtl fanCtlHeatBreak = CFanCtl(
     FANCTLHEATBREAK_PWM_THR,
     is_autofan_t::yes, restore_autofan,
     skip_tacho_t::no);
-#endif //NEW_FANCTL
+#endif // NEW_FANCTL
 
 LOG_COMPONENT_DEF(Marlin, LOG_SEVERITY_INFO);
 LOG_COMPONENT_DEF(Buddy, LOG_SEVERITY_DEBUG);
@@ -83,7 +88,7 @@ extern uartslave_t uart6slave; // PUT slave
 
 #ifdef BUDDY_ENABLE_ETHERNET
 extern osThreadId webServerTaskHandle; // Webserver thread(used for fast boot mode)
-#endif                                 //BUDDY_ENABLE_ETHERNET
+#endif                                 // BUDDY_ENABLE_ETHERNET
 
 void app_setup(void) {
     if (INIT_TRINAMIC_FROM_MARLIN_ONLY == 0) {
@@ -111,9 +116,14 @@ void app_run(void) {
     app_setup_marlin_logging();
 
     LangEEPROM::getInstance();
+    ConfigurationStore<>::GetStore().Init();
 
     marlin_server_init();
     marlin_server_idle_cb = app_idle;
+
+#ifdef SIM_HEATER
+    sim_heater_init();
+#endif // SIM_HEATER
 
     log_info(Marlin, "Starting setup");
 
@@ -207,6 +217,14 @@ static void record_fanctl_metrics() {
 #endif
 
 void adc_tick_1ms(void) {
+#ifdef SIM_HEATER
+    static uint8_t cnt_sim_heater = 0;
+    if (++cnt_sim_heater >= 50) // sim_heater freq = 20Hz
+    {
+        sim_heater_cycle();
+        cnt_sim_heater = 0;
+    }
+#endif // SIM_HEATER
 }
 
 void app_tim14_tick(void) {
@@ -215,13 +233,15 @@ void app_tim14_tick(void) {
     record_fanctl_metrics();
 #endif //NEW_FANCTL
 #if HAS_GUI()
+    #error "HAS_GUI not defined."
+#elif HAS_GUI
     jogwheel.Update1msFromISR();
 #endif
     Sound_Update1ms();
-    //hwio_update_1ms();
+    // hwio_update_1ms();
     adc_tick_1ms();
 }
 
 } // extern "C"
 
-//cpp code
+// cpp code
