@@ -15,6 +15,7 @@
 #include <cstring>
 #include <cctype>
 #include <mbedtls/sha256.h>
+#include "configuration_store.hpp"
 
 using std::nullopt;
 
@@ -251,14 +252,14 @@ Printer::Params MarlinPrinter::params() const {
 
 Printer::Config MarlinPrinter::load_config() {
     Config configuration = {};
-    configuration.enabled = eeprom_get_bool(EEVAR_CONNECT_ENABLED);
+    configuration.enabled = config_store().connect_enabled.get();
     if (configuration.enabled) {
         // Just avoiding to read it when disabled, only to save some CPU
         strextract(configuration.host, sizeof configuration.host, EEVAR_CONNECT_HOST);
         decompress_host(configuration.host, sizeof configuration.host);
         strextract(configuration.token, sizeof configuration.token, EEVAR_CONNECT_TOKEN);
-        configuration.tls = eeprom_get_bool(EEVAR_CONNECT_TLS);
-        configuration.port = eeprom_get_ui16(EEVAR_CONNECT_PORT);
+        configuration.tls = config_store().connect_tls.get();
+        configuration.port = config_store().connect_port.get();
     }
 
     return configuration;
@@ -274,8 +275,8 @@ bool MarlinPrinter::load_cfg_from_ini() {
 
         eeprom_set_pchar(EEVAR_CONNECT_HOST, config.host, 0, 1);
         eeprom_set_pchar(EEVAR_CONNECT_TOKEN, config.token, 0, 1);
-        eeprom_set_ui16(EEVAR_CONNECT_PORT, config.port);
-        eeprom_set_bool(EEVAR_CONNECT_TLS, config.tls);
+        config_store().connect_port.set(config.tls);
+        config_store().connect_tls.set(config.tls);
         // Note: enabled is controlled in the GUI
     }
     return ok;
