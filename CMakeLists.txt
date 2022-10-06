@@ -456,7 +456,6 @@ if(BOARD MATCHES "BUDDY")
 else()
   target_link_libraries(firmware PRIVATE)
 endif()
-
 set_property(
   SOURCE src/common/version.c
   APPEND
