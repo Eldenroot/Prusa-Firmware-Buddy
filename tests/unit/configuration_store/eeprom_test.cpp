@@ -153,14 +153,14 @@ TEST_CASE("String") {
     eeprom_chip.clear();
     auto eeprom = new ConfigurationStore();
     eeprom->init();
-    REQUIRE(strcmp(eeprom->string_type.get(), "test string") == 0);
+    REQUIRE(strcmp(eeprom->string_type.get().data(), "test string") == 0);
 
     eeprom->string_type.set("test");
-    REQUIRE(strcmp(eeprom->string_type.get(), "test") == 0);
+    REQUIRE(strcmp(eeprom->string_type.get().data(), "test") == 0);
     delete eeprom;
     eeprom = new ConfigurationStore();
     eeprom->init();
-    REQUIRE(strcmp(eeprom->string_type.get(), "test") == 0);
+    REQUIRE(strcmp(eeprom->string_type.get().data(), "test") == 0);
 }
 TEST_CASE("Array") {
     eeprom_chip.clear();
