@@ -46,12 +46,12 @@
 #include "fsm_types.hpp"
 #include "odometer.hpp"
 #include "metric.h"
-#include "feature/has_selftest.h"
+#include "option/has_selftest.h"
 #include "configuration_store.hpp"
 
 #include <option/has_gui.h>
 
-#if HAS_SELFTEST
+#if HAS_SELFTEST()
     #include "printer_selftest.hpp"
 #endif
 
@@ -313,7 +313,7 @@ int marlin_server_cycle(void) {
         return 0;
     processing = 1;
     bool call_print_loop = true;
-#if HAS_SELFTEST
+#if HAS_SELFTEST()
     if (SelftestInstance().IsInProgress()) {
         SelftestInstance().Loop();
         call_print_loop = false;
@@ -590,7 +590,7 @@ void marlin_server_set_command(uint32_t command) {
 }
 
 void marlin_server_test_start(uint64_t mask) {
-#if HAS_SELFTEST
+#if HAS_SELFTEST()
     if (((marlin_server.print_state == mpsIdle) || (marlin_server.print_state == mpsFinished) || (marlin_server.print_state == mpsAborted)) && (!SelftestInstance().IsInProgress())) {
         SelftestInstance().Start(mask);
     }
@@ -598,7 +598,7 @@ void marlin_server_test_start(uint64_t mask) {
 }
 
 void marlin_server_test_abort(void) {
-#if HAS_SELFTEST
+#if HAS_SELFTEST()
     if (SelftestInstance().IsInProgress()) {
         SelftestInstance().Abort();
     }
@@ -617,7 +617,7 @@ bool marlin_server_printer_paused() {
 }
 
 void marlin_server_print_start(const char *filename, bool skip_preview) {
-#if HAS_SELFTEST
+#if HAS_SELFTEST()
     if (SelftestInstance().IsInProgress())
         return;
 #endif
