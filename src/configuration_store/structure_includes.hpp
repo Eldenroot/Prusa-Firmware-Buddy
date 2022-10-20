@@ -8,6 +8,7 @@
 #endif
 #include "mem_config_item.hpp"
 #ifndef EEPROM_UNITTEST
+    #include "option/has_selftest.h"
     #include "footer_eeprom.hpp"
 
     #include "../../lib/Marlin/Marlin/src/module/temperature.h"

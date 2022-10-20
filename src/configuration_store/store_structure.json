@@ -6,17 +6,17 @@
   "run_selftest": {
     "data_type": "bool",
     "default": true,
-    "ifdef": "HAS_SELFTEST"
+    "ifdef": "HAS_SELFTEST()"
   },
   "run_xyz_calib": {
     "data_type": "bool",
     "default": true,
-    "ifdef": "HAS_SELFTEST"
+    "ifdef": "HAS_SELFTEST()"
   },
   "run_firstlay": {
     "data_type": "bool",
     "default": true,
-    "ifdef": "HAS_SELFTEST"
+    "ifdef": "HAS_SELFTEST()"
   },
   "fsensor_enabled": {
     "data_type": "bool",

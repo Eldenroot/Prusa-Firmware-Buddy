@@ -35,8 +35,8 @@ LOG_COMPONENT_DEF(WUI, LOG_SEVERITY_DEBUG);
 LOG_COMPONENT_DEF(Network, LOG_SEVERITY_INFO);
 
 // FIXME: " " vs <>
-#include "eeprom.h"
 #include "variant8.h"
+#include "configuration_store.hpp"
 
 using std::unique_lock;
 

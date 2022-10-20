@@ -1,6 +1,7 @@
 #include "configuration_store.hpp"
 #include "configuration_store.h"
 #include "logging/log.h"
+using namespace configuration_store;
 
 LOG_COMPONENT_REF(EEPROM);
 
