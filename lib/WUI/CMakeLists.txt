@@ -31,8 +31,11 @@ target_sources(
             nhttp/status_page.cpp
             nhttp/upload_state.cpp
             random.cpp
+            random.cpp
             sntp/sntp.c
             sntp/sntp.c
+            sntp/sntp.c
+            sntp/sntp_client.c
             sntp/sntp_client.c
             sntp/sntp_client.c
             wui.cpp
