@@ -199,3 +199,16 @@ TEST_CASE("Struct") {
     REQUIRE(struct_type.array == std::array<int32_t, 10> { 10, 10, 0, 0, 0, 0, 0, 0, 0, 0 });
     REQUIRE(strcmp(struct_type.string_type.data(), "test") == 0);
 }
+
+TEST_CASE("Test") {
+    eeprom_chip.clear();
+    auto eeprom = new ConfigurationStore();
+    eeprom->init();
+
+    eeprom->SimpleType.get();
+
+    eeprom->SimpleType.set(129);
+    eeprom->last_ten_values.set();
+
+    INFO("The data is " << eeprom->SimpleType.get());
+}

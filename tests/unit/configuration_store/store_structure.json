@@ -16,6 +16,14 @@
       "default": 0
     }
   },
+  "last_ten_values": {
+    "data_type": "array",
+    "length": 10,
+    "item": {
+      "data_type": "i32",
+      "default": 0
+    }
+  },
   "struct_type": {
     "type_name": "StructType",
     "data_type": "struct",

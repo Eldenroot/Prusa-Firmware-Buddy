@@ -223,7 +223,7 @@ class ItemParser:
     def get_switch_cases(self) -> List[str]:
         cases = []
         for crc, item in self.items.items():
-            line = f"case {str(crc)}:\n store.{item.name}.init(EepromAccess::deserialize_data<decltype(store.{item.name}.data)>(data).data);\n break;"
+            line = f"case {str(crc)}:\n store.{item.name}.init(EepromAccess::deserialize_data<decltype(store.{item.name}.data)>(data).data); \n return true;"
             if item.ifdef is not None:
                 cases.append(add_ifdef(item.ifdef, line))
             else:
@@ -294,12 +294,14 @@ def main():
         file.write(
             "#include \"configuration_store/configuration_store.hpp\"\n")
         file.write(
-            "void ItemUpdater::operator()(uint32_t crc,const std::vector<uint8_t> &data) {\n"
+            "bool ItemUpdater::operator()(uint32_t crc,const std::vector<uint8_t> &data) {\n"
         )
         file.write("switch(crc){\n")
         for case in item_parser.get_switch_cases():
             file.write(f"{case}\n")
+        file.write("default:\n return false;\n")
         file.write("}\n")
+        file.write("return false;\n")
         file.write("}\n")
 
 
