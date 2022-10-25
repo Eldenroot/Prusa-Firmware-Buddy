@@ -5,7 +5,7 @@
 #include <timing.h>
 #include <inttypes.h> // PRI* macros (not available in <cinttypes>)
 #include "random.h"
-#include "../wui_api.h"
+#include "../wui_api.hpp"
 
 #include <mbedtls/md5.h>
 

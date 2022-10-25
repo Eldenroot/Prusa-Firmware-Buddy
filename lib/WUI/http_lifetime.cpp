@@ -5,7 +5,7 @@
 #include "link_content/usb_files.h"
 #include "link_content/previews.h"
 #include "wui.h"
-#include "wui_api.h"
+#include "wui_api.hpp"
 
 #include <FreeRTOS.h>
 #include <semphr.h>

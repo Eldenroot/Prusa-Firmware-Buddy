@@ -27,7 +27,7 @@
 #include "netifapi.h"
 #include "dns.h"
 #include "netif_settings.h"
-#include "wui_api.h"
+#include "wui_api.hpp"
 #include "espif.h"
 #include "otp.h"
 

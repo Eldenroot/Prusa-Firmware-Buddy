@@ -21,7 +21,7 @@ extern "C" {
 }
 
 #include "ff.h"
-#include "wui_api.h"
+#include "wui_api.hpp"
 
 #include <lwip/def.h>
 #include <lwip/ethip6.h>

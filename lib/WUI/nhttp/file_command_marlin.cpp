@@ -1,5 +1,5 @@
 #include "file_command.h"
-#include "wui_api.h"
+#include "wui_api.hpp"
 
 #include <unistd.h>
 #include <cstring>

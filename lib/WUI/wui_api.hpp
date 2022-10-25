@@ -150,18 +150,9 @@ const char *wui_get_api_key();
 ////////////////////////////////////////////////////////////////////////////
 /// @brief Generate authorization key for PrusaLink
 ///
-/// @param[out] buffer api key buffer
-/// @param[in] length Size of the buffer
-/// @return Return an x-api-key
-const char *wui_generate_api_key(char *, uint32_t);
+void wui_generate_api_key();
 
 ////////////////////////////////////////////////////////////////////////////
-/// @brief Generate authorization key for PrusaLink
-///
-/// @param[out] api_key api key buffer
-/// @param[in] length Size of the buffer
-void wui_store_api_key(char *, uint32_t);
-
 /// Start a print of a given filename.
 ///
 /// Returns false if can't print right now. Note that this doesn't check the

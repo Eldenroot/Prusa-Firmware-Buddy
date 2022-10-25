@@ -62,7 +62,7 @@
 
 #include <string.h>
 #include <time.h>
-#include "wui_api.h"
+#include "wui_api.hpp"
 
 #if LWIP_UDP
 

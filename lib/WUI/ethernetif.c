@@ -9,7 +9,7 @@
 #include <string.h>
 #include "cmsis_os.h"
 #include "lwip/netifapi.h"
-#include "wui_api.h"
+#include "wui_api.hpp"
 #include "otp.h"
 #include <stdbool.h>
 

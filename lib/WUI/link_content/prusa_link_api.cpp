@@ -6,7 +6,7 @@
 #include "../nhttp/gcode_upload.h"
 #include "../nhttp/job_command.h"
 #include "../nhttp/stateless_json.h"
-#include "../wui_api.h"
+#include "../wui_api.hpp"
 
 #include <cstring>
 #include <cstdio>

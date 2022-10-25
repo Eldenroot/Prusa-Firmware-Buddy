@@ -8,7 +8,7 @@
  *      Author: Marek Mosna <marek.mosna[at]prusa3d.cz>
  */
 
-#include "wui_api.h"
+#include "wui_api.hpp"
 #include "netdev.h"
 #include "version.h"
 #include "otp.h"

@@ -3,7 +3,7 @@
 #include "file_info.h"
 #include "handler.h"
 #include "../../src/common/gcode_filename.h"
-#include "../wui_api.h"
+#include "../wui_api.hpp"
 
 #include <cassert>
 #include <cstring>

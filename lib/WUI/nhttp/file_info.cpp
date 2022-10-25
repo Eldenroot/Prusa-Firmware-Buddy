@@ -4,7 +4,7 @@
 #include "status_page.h"
 #include "../../src/common/lfn.h"
 #include "../../src/common/gcode_filename.h"
-#include "../wui_api.h"
+#include "../wui_api.hpp"
 
 #include <http/chunked.h>
 #include <json_encode.h>
