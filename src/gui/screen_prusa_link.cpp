@@ -134,10 +134,8 @@ void ScreenMenuPrusaLink::windowEvent(EventLock /*has private ctor*/, window_t *
         uint32_t type = ((uint32_t)param) & 0xFFFF0000;
         switch (type) {
         case MI_PL_REGENERATE_API_KEY::EventMask::value: {
-            char api_key[PL_API_KEY_SIZE] = { 0 };
-            wui_generate_api_key(api_key, PL_API_KEY_SIZE);
-            wui_store_api_key(api_key, PL_API_KEY_SIZE);
-            display_passwd(api_key);
+            wui_generate_api_key();
+            display_passwd(wui_get_api_key());
             break;
         }
         case MI_PL_ENABLED::EventMask::value:

@@ -8,6 +8,11 @@ public:
     ConfigurationStore<> &store;
     ItemUpdater(ConfigurationStore<> &store)
         : store(store) {}
-    void operator()(uint32_t crc, const std::vector<uint8_t> &data);
+    /**
+     * @param crc
+     * @param data
+     * @return returns true if the item is valid or unsupported but already invalidated, true if item is unsupported
+     */
+    bool operator()(uint32_t crc, const std::vector<uint8_t> &data);
 };
 };

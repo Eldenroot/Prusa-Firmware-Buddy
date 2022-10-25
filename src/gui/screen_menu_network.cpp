@@ -5,7 +5,7 @@
 #include "MItem_menus.hpp"
 #include "MItem_tools.hpp"
 #include "MItem_lan.hpp"
-#include "wui_api.h"
+#include "wui_api.hpp"
 #include "netdev.h"
 #include "network_gui_tools.hpp"
 #include <http_lifetime.h>

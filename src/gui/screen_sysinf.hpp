@@ -11,7 +11,7 @@
 
 #ifdef DEBUG_NTP
     #include "../lang/format_print_will_end.hpp"
-    #include "wui_api.h"
+    #include "wui_api.hpp"
 #endif
 
 struct screen_sysinfo_data_t : public AddSuperWindow<screen_t> {

@@ -1,5 +1,5 @@
 #include "network_gui_tools.hpp"
-#include "wui_api.h"
+#include "wui_api.hpp"
 
 void stringify_address_for_screen(char *dest, size_t dest_len, const lan_t config, uint32_t eth_var) {
     if (eth_var & ETHVAR_STATIC_LAN_ADDRS) {

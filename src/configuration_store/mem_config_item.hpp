@@ -33,6 +33,7 @@ public:
 
     void set(T new_data);
     T get();
+    void dump_data(bool save_default);
 
     constexpr MemConfigItem(EepromKey key, const T def_val)
         : key(key)
@@ -54,6 +55,7 @@ struct MemConfigItem<std::array<T, SIZE>> {
     void init(const std::array<T, SIZE> &new_data);
 
     void set(const std::array<T, SIZE> &new_data);
+    void dump_data(bool save_default);
 
     std::array<T, SIZE> get();
 
@@ -78,6 +80,7 @@ struct MemConfigItem<std::array<char, SIZE>> {
 
     void set(const std::array<char, SIZE> &new_data);
     void set(const char *new_data);
+    void dump_data(bool save_default);
     std::array<char, SIZE> get();
 
     constexpr MemConfigItem(EepromKey key, const char *def_val)

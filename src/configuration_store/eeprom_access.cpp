@@ -3,7 +3,7 @@
 #include "timing.h"
 LOG_COMPONENT_DEF(EEPROM_ACCESS, LOG_SEVERITY_DEBUG);
 using namespace configuration_store;
-void EepromAccess::store_item(const std::vector<uint8_t> &data) {
+bool EepromAccess::store_item(const std::vector<uint8_t> &data) {
     log_debug(EEPROM_ACCESS, "Store item with size %d", data.size());
     if (!initialized) {
         fatal_error("Eeprom used uninitialized", "eeprom");
@@ -23,7 +23,9 @@ void EepromAccess::store_item(const std::vector<uint8_t> &data) {
 
     // check if the item will fit inside current bank
     if (check_size(size_of_item)) {
-        cleanup();
+        switch_bank();
+        first_free_space = get_start_offset();
+        return false;
     }
 
     // persist data in eeprom
@@ -34,6 +36,7 @@ void EepromAccess::store_item(const std::vector<uint8_t> &data) {
     st25dv64k_user_write_bytes(first_free_space + sizeof(len), data.data(), data.size());
     st25dv64k_user_write(first_free_space, len);
     first_free_space += size_of_item;
+    return true;
 }
 
 std::optional<std::vector<uint8_t>> EepromAccess::load_item(uint16_t address) {
@@ -145,11 +148,14 @@ EepromAccess &EepromAccess::instance() {
     return eeprom;
 }
 bool EepromAccess::init_from(ItemUpdater &updater, uint16_t &address) {
+    HashMap<NUM_OF_ITEMS> map;
     size_t num_of_items = 0;
     for (auto item = load_item(address); item.has_value(); item = load_item(address)) {
         auto data = item.value();
         Key key = msgpack::unpack<Key>(data);
-        updater(key.key, data);
+        if (!updater(key.key, data)) {
+            //unknown id
+        }
         address += HEADER_SIZE + CRC_SIZE + data.size();
         num_of_items++;
     }
@@ -157,17 +163,15 @@ bool EepromAccess::init_from(ItemUpdater &updater, uint16_t &address) {
     uint8_t ending_flag = st25dv64k_user_read(address);
     return ending_flag == LAST_ITEM_STOP;
 }
+
 bool EepromAccess::check_size(uint8_t size) {
     uint16_t free_space = BANK_SIZE - (first_free_space - get_start_offset());
     log_debug(EEPROM_ACCESS, "Free space lef %d", free_space);
     return free_space < size;
 }
+
 void EepromAccess::reset() {
     std::unique_lock lock(mutex);
     st25dv64k_user_write(START_OFFSET, 0xff);
     st25dv64k_user_write(START_OFFSET + BANK_SIZE, 0xff);
-}
-FreeRTOS_Mutex &configuration_store::get_item_mutex() {
-    static FreeRTOS_Mutex mutex;
-    return mutex;
 }

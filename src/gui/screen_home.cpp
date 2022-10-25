@@ -9,7 +9,7 @@
 #include "screen_print_preview.hpp"
 #include "screen_filebrowser.hpp"
 #include "print_utils.hpp"
-#include <wui_api.h>
+#include <wui_api.hpp>
 #include <espif.h>
 
 #include "ScreenHandler.hpp"

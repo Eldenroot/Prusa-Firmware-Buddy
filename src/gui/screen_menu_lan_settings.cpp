@@ -6,7 +6,7 @@
 #include "screen_menu.hpp"
 #include "WindowMenuItems.hpp"
 #include "MItem_tools.hpp"
-#include "wui_api.h"
+#include "wui_api.hpp"
 #include "RAII.hpp"
 #include "i18n.h"
 #include "ScreenHandler.hpp"
