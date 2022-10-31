@@ -12,7 +12,7 @@
 #include "bsod.h"
 #include "freertos_mutex.hpp"
 #include <mutex>
-
+#include "hash_table.hpp"
 namespace configuration_store { // helper structs
 
 struct Key {
@@ -20,6 +20,16 @@ struct Key {
     template <class Packer>
     void pack(Packer &pack) {
         pack(key);
+    }
+};
+
+struct InvalidatedItem {
+    uint32_t key;
+    std::nullptr_t nil;
+
+    template <class Packer>
+    void pack(Packer &pack) {
+        pack(key, nil);
     }
 };
 
@@ -79,6 +89,7 @@ public:
     static constexpr uint8_t LAST_ITEM_STOP = 0xfe;
     static constexpr size_t HEADER_SIZE = 1;
     static constexpr size_t CRC_SIZE = 4;
+    static constexpr size_t NIL_POSITION = 6;
 
     uint16_t first_free_space = START_OFFSET;
 
@@ -86,6 +97,8 @@ public:
     std::vector<uint8_t> static serialize_data(const char *key, T data);
     template <class T>
     DataItem<T> static deserialize_data(std::vector<uint8_t> data);
+
+    void invalidate_items(const HashMap<NUM_OF_ITEMS> &items_to_invalidate);
 
     // stores item to eeprom and calculates the crc of the data, will do cleanup if there is not enough space left in the bank to store the item
     // +--------+========+--------+
@@ -131,7 +144,6 @@ public:
      */
     void cleanup();
     uint8_t bank_selector;
-    bool initialized = false;
     FreeRTOS_Mutex mutex;
 
 public:
@@ -160,14 +172,12 @@ public:
      * Writes 0xff on the first byte of each eeprom bank
      */
     void reset();
-
+    EepromAccess() = default;
+    EepromAccess(EepromAccess &&other);
     static EepromAccess &instance();
 };
 template <class T>
 bool EepromAccess::set(const char *key, const T &data) {
-    if (!initialized) {
-        fatal_error("Eeprom used uninitialized", "eeprom");
-    }
     auto serialized = serialize_data(key, data);
 
     std::unique_lock lock(mutex);

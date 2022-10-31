@@ -7,7 +7,7 @@ def test_array_def_for_each():
         "data_type": "array",
         "length": 10,
         "item": {
-            "data_type": "i32",
+            "data_type": "int32_t",
             "default": 0
         }
     }
@@ -48,7 +48,7 @@ def test_bool():
 
 
 def test_number():
-    data = {"data_type": "i32", "default": 0}
+    data = {"data_type": "int32_t", "default": 0}
     item_parser = ItemParser()
     item = item_parser.parse_type("test", data)
     assert type(item) == BasicItem
@@ -66,12 +66,12 @@ def test_struct():
                 "data_type": "array",
                 "length": 10,
                 "item": {
-                    "data_type": "i32",
+                    "data_type": "int32_t",
                     "default": 0
                 }
             },
             "SimpleType": {
-                "data_type": "i32",
+                "data_type": "int32_t",
                 "default": 0
             },
             "string_type": {
@@ -100,7 +100,11 @@ pack(array, SimpleType, string_type);}
 
 
 def test_ifdef():
-    data = {"data_type": "i32", "default": 0, "ifdef": "defined(HAS_LIVE_Z)"}
+    data = {
+        "data_type": "int32_t",
+        "default": 0,
+        "ifdef": "defined(HAS_LIVE_Z)"
+    }
     item_parser = ItemParser()
     item = item_parser.parse_type("test", data)
     assert type(item) == BasicItem

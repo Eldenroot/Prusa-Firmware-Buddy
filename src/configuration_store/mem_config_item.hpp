@@ -25,6 +25,7 @@ class MemConfigItem {
     void set_to_default() {
         data = def_val;
     }
+
     friend ItemUpdater;
     friend ConfigurationStore<>;
 
@@ -58,6 +59,7 @@ struct MemConfigItem<std::array<T, SIZE>> {
     void dump_data(bool save_default);
 
     std::array<T, SIZE> get();
+    bool check_data();
 
     constexpr MemConfigItem(EepromKey key, const T def_val)
         : key(key)
@@ -71,6 +73,7 @@ struct MemConfigItem<std::array<char, SIZE>> {
     EepromKey key;
     std::array<char, SIZE> data;
     const char *def_val;
+    static constexpr size_t size = SIZE;
 
     void set_to_default() {
         strcpy(data.data(), def_val);

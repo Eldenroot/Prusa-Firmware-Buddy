@@ -22,7 +22,7 @@ class HashMap {
 
 public:
     class Iterator : public std::forward_iterator_tag {
-        using ArrayIterator = typename std::array<std::pair<uint32_t, int32_t>, SIZE>::iterator;
+        using ArrayIterator = typename std::array<std::pair<uint32_t, int32_t>, SIZE>::const_iterator;
         ArrayIterator it;
         ArrayIterator end;
 
@@ -58,12 +58,12 @@ public:
             ++it;
             return to_ret;
         }
-        std::pair<uint32_t, int32_t> &operator*() { return *it; }
+        const std::pair<uint32_t, int32_t> &operator*() const { return *it; }
     };
     HashMap() {
         data.fill(std::pair<uint32_t, int32_t> { 0, static_cast<int32_t>(Field::vacant) });
     }
-    Iterator begin() {
+    Iterator begin() const {
         auto it = data.begin();
         while (it != data.end() && it->second < 0) {
             it++;
@@ -71,7 +71,7 @@ public:
         return Iterator(it, data.end());
     }
 
-    Iterator end() { return Iterator(data.end(), data.end()); }
+    Iterator end() const { return Iterator(data.end(), data.end()); }
 
     /**
      * Inserts the key to the table
@@ -86,6 +86,11 @@ public:
      * @return Nullopt if not present else the value
      */
     std::optional<uint16_t> Get(uint32_t key);
+    /**
+     * Removes the key from map
+     * @param key
+     */
+    void remove(uint32_t key);
 };
 template <size_t SIZE>
 size_t HashMap<SIZE>::calculate_index(uint32_t key, size_t unsuccesfull) {
@@ -111,14 +116,28 @@ template <size_t SIZE>
 std::optional<uint16_t> HashMap<SIZE>::Get(uint32_t key) {
     size_t index = 0;
     size_t missed = 0;
-    for (index = calculate_index(key, missed); data[index].first != key && data[index].second >= 0; index = calculate_index(key, missed++)) {
+    for (index = calculate_index(key, missed); data[index].first != key && (data[index].second >= 0 || data[index].second == static_cast<int32_t>(Field::tombstone)); index = calculate_index(key, missed++)) {
         if (missed > SIZE) {
-            fatal_error("HashTable full", "HashTable");
+            return std::nullopt; // hashtable is full and we have not found the item
         }
     }
     if (data[index].first != key) {
         return std::nullopt;
     } else {
         return data[index].second;
+    }
+}
+template <size_t SIZE>
+void HashMap<SIZE>::remove(uint32_t key) {
+    size_t index = 0;
+    size_t missed = 0;
+    for (index = calculate_index(key, missed); data[index].first != key && (data[index].second >= 0 || data[index].second == static_cast<int32_t>(Field::tombstone)); index = calculate_index(key, missed++)) {
+        if (missed > SIZE) {
+            return;
+        }
+    }
+    if (data[index].first == key) {
+        data[index].first = 0;
+        data[index].second = static_cast<int32_t>(Field::tombstone);
     }
 }

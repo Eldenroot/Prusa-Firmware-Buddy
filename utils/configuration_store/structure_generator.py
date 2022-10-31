@@ -7,23 +7,6 @@ from typing import Any, Optional, List
 from pathlib import Path
 import zlib
 
-basic_types = {
-    "int8_t", "int16_t", "int32_t", "uint8_t", "uint16_t", "uint32_t", "bool",
-    "float", "char"
-}
-
-
-class DataType(Enum):
-    i8 = "int8_t"
-    i16 = "int16_t"
-    i32 = "int32_t"
-    u8 = "uint8_t"
-    u16 = "uint16_t"
-    u32 = "uint32_t"
-    flt = "float"
-    bool = "bool"
-    char = "char"
-
 
 def add_ifdef(ifdef: str, definition: str) -> str:
     res = f"#if {ifdef}\n "
@@ -68,11 +51,10 @@ class Item(ABC):
 
 
 class BasicItem(Item):
-    data_type: DataType
+    data_type: str
     def_val: Any
 
-    def __init__(self, name: str, data_type: DataType, default: Any,
-                 ifdef: Any):
+    def __init__(self, name: str, data_type: str, default: Any, ifdef: Any):
         self.name = name
         self.data_type = data_type
         self.def_val = default
@@ -82,7 +64,7 @@ class BasicItem(Item):
         return None
 
     def get_type_name(self):
-        return self.data_type.value
+        return self.data_type
 
     @property
     def default(self) -> str:
@@ -155,7 +137,6 @@ class ItemParser:
     additional: list
 
     def __init__(self):
-        self.bounds = dict()
         self.items = dict()
         self.additional = []
 
@@ -164,10 +145,6 @@ class ItemParser:
                             data_type: str,
                             default: Any,
                             ifdef=None) -> Item:
-        try:
-            data_type = DataType[data_type]
-        except:
-            raise Exception(f"{name} has invalid data type")
 
         return BasicItem(name, data_type, default, ifdef)
 

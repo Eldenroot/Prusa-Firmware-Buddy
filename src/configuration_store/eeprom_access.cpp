@@ -5,9 +5,6 @@ LOG_COMPONENT_DEF(EEPROM_ACCESS, LOG_SEVERITY_DEBUG);
 using namespace configuration_store;
 bool EepromAccess::store_item(const std::vector<uint8_t> &data) {
     log_debug(EEPROM_ACCESS, "Store item with size %d", data.size());
-    if (!initialized) {
-        fatal_error("Eeprom used uninitialized", "eeprom");
-    }
     // we have only one byte to store length of the data and 0xff is invalid length value
     if (data.size() >= (std::numeric_limits<uint8_t>::max() - 1)) {
         fatal_error("data too large", "eeprom");
@@ -23,9 +20,7 @@ bool EepromAccess::store_item(const std::vector<uint8_t> &data) {
 
     // check if the item will fit inside current bank
     if (check_size(size_of_item)) {
-        switch_bank();
-        first_free_space = get_start_offset();
-        return false;
+        cleanup();
     }
 
     // persist data in eeprom
@@ -83,6 +78,10 @@ void EepromAccess::cleanup() {
     for (auto item = load_item(address); item.has_value(); item = load_item(address)) {
         auto data = item.value();
         Key key = msgpack::unpack<Key>(data);
+        if (data[NIL_POSITION] == msgpack::nil) {
+            // remove invalidated items
+            map.remove(key.key);
+        }
         map.Set(key.key, address);
         address += HEADER_SIZE + CRC_SIZE + data.size();
     }
@@ -137,7 +136,6 @@ void EepromAccess::init(ItemUpdater &updater) {
 
     first_free_space = address;
     uint16_t free_space = BANK_SIZE - (address - get_start_offset());
-    initialized = true;
     if (free_space < MIN_FREE_SPACE) {
         cleanup();
     }
@@ -147,20 +145,43 @@ EepromAccess &EepromAccess::instance() {
     static EepromAccess eeprom;
     return eeprom;
 }
+enum class ItemState : uint16_t {
+    Valid,
+    Invalid,
+    Invalidated,
+};
+
+void EepromAccess::invalidate_items(const HashMap<NUM_OF_ITEMS> &items_to_invalidate) {
+    for (auto &[key, item_validity] : items_to_invalidate) {
+        if (static_cast<ItemState>(item_validity) == ItemState::Invalid) {
+            // we want to invalidate invalid items
+            InvalidatedItem item { key };
+            store_item(msgpack::pack(item));
+        }
+    }
+}
 bool EepromAccess::init_from(ItemUpdater &updater, uint16_t &address) {
-    HashMap<NUM_OF_ITEMS> map;
+    HashMap<NUM_OF_ITEMS> invalid_items;
     size_t num_of_items = 0;
     for (auto item = load_item(address); item.has_value(); item = load_item(address)) {
         auto data = item.value();
         Key key = msgpack::unpack<Key>(data);
         if (!updater(key.key, data)) {
-            //unknown id
+            // unknown id
+            if (data[NIL_POSITION] == msgpack::nil) {
+                // already set to invalid in eeprom, we dont want to write another invalid item
+                invalid_items.Set(key.key, static_cast<uint16_t>(ItemState::Invalidated));
+            } else {
+                invalid_items.Set(key.key, static_cast<uint16_t>(ItemState::Invalid));
+            }
         }
         address += HEADER_SIZE + CRC_SIZE + data.size();
         num_of_items++;
     }
     log_info(EEPROM_ACCESS, "Loaded %d items", num_of_items);
     uint8_t ending_flag = st25dv64k_user_read(address);
+    first_free_space = address;
+    invalidate_items(invalid_items);
     return ending_flag == LAST_ITEM_STOP;
 }
 
@@ -174,4 +195,11 @@ void EepromAccess::reset() {
     std::unique_lock lock(mutex);
     st25dv64k_user_write(START_OFFSET, 0xff);
     st25dv64k_user_write(START_OFFSET + BANK_SIZE, 0xff);
+    bank_selector = 0;
+    st25dv64k_user_write(BANK_SELECTOR_ADDRESS, bank_selector);
+    first_free_space = START_OFFSET;
 }
+EepromAccess::EepromAccess(EepromAccess &&other)
+    : first_free_space(other.first_free_space)
+    , bank_selector(other.bank_selector)
+    , mutex(std::move(mutex)) {}

@@ -8,15 +8,22 @@ TEST_CASE("Simple test") {
     REQUIRE(set.Get(1).has_value());
     REQUIRE(set.Get(1).value() == 100);
 }
-TEST_CASE("Test collisions") {
+TEST_CASE("Test collisions and deletions") {
     HashMap<10> set;
     set.Set(1, 100);
     set.Set(11, 1000);
+    set.Set(21, 10000);
     REQUIRE(set.Get(1).has_value());
     REQUIRE(set.Get(1).value() == 100);
     REQUIRE(set.Get(11).has_value());
     REQUIRE(set.Get(11).value() == 1000);
-    REQUIRE(!set.Get(21).has_value());
+    REQUIRE(set.Get(21).has_value());
+    REQUIRE(set.Get(21).value() == 10000);
+    REQUIRE(!set.Get(31).has_value());
+    set.remove(11);
+    REQUIRE(!set.Get(11).has_value());
+    REQUIRE(set.Get(21).has_value());
+    REQUIRE(set.Get(21).value() == 10000);
 }
 TEST_CASE("Test iterator") {
     std::set<std::pair<uint32_t, int32_t>> data { std::pair<uint32_t, int32_t> { 10, 100 }, std::pair<uint32_t, int32_t> { 11, 101 }, std::pair<uint32_t, int32_t> { 12, 102 } };

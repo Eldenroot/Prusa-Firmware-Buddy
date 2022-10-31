@@ -5,12 +5,20 @@
 #include <tuple>
 #include "configuration_store_structure.hpp"
 #include "item_updater.hpp"
-#include "disable_interrupts.h"
+#include "mem_config_item.hpp"
+#include <variant>
+
+#ifndef EEPROM_UNITTEST
+    #include "disable_interrupts.h"
+#endif
 
 namespace configuration_store {
-enum class BackendType {
-    Eeprom
+template <class... Ts>
+struct overloaded : Ts... {
+    using Ts::operator()...;
 };
+using Backend = std::variant<EepromAccess>;
+
 FreeRTOS_Mutex &get_item_mutex();
 /**
  * This class is configuration store which provides easy access to its values.
@@ -25,40 +33,38 @@ FreeRTOS_Mutex &get_item_mutex();
  */
 template <class CONFIG>
 class ConfigurationStore : public CONFIG {
-    BackendType selected_backend;
-    EepromAccess eeprom_access;
+#ifdef EEPROM_UNITTEST
+public:
+#endif
+    Backend backend;
 
 public:
     template <class T>
     void set(const char *key, const T &data) {
-        switch (selected_backend) {
-        case BackendType::Eeprom: {
-            // could fail only if we need to do clean up. By dumping non-default data from configuration store we solve problem with old invalid types still stored in eeprom
-            bool res = eeprom_access.template set(key, data);
-            if (!res) {
-                dump_data(BackendType::Eeprom, false);
-            }
-        } break;
-        }
+        std::visit(
+            [&](auto &access) { access.template set(key, data); },
+            backend);
     };
 
-    ConfigurationStore() = default;
+    ConfigurationStore(Backend &&backend)
+        : backend(std::move(backend)) {};
     ConfigurationStore(const ConfigurationStore &other) = delete;
     void init();
     static ConfigurationStore &GetStore();
-    void dump_data(BackendType backend, bool save_default_values = false);
+    void dump_data(Backend data_dump, bool save_default_values = false);
     void factory_reset();
 };
 
 template <class CONFIG>
 void ConfigurationStore<CONFIG>::init() {
     ItemUpdater updater(*this);
-    EepromAccess::instance().init(updater);
+    std::visit([&](auto &access) { access.init(updater); },
+        backend);
 }
 
 template <class CONFIG>
 ConfigurationStore<CONFIG> &ConfigurationStore<CONFIG>::GetStore() {
-    static ConfigurationStore store {};
+    static ConfigurationStore<CONFIG> store(EepromAccess {});
     return store;
 }
 
@@ -68,32 +74,32 @@ ConfigurationStore<CONFIG> &ConfigurationStore<CONFIG>::GetStore() {
  */
 template <class CONFIG>
 void ConfigurationStore<CONFIG>::factory_reset() {
-
-    std::apply([&](auto &... items) {
-        ((items.set_to_default()), ...);
-    },
-        CONFIG::tuplify());
+    // just invalidate the eeprom and reset the printer
+    std::unique_lock lock(get_item_mutex());
     EepromAccess::instance().reset();
 }
+
 template <class CONFIG>
-void ConfigurationStore<CONFIG>::dump_data(BackendType backend, bool save_default) {
-    BackendType current_backend = selected_backend;
-    selected_backend = backend;
+void ConfigurationStore<CONFIG>::dump_data(Backend data_dump, bool save_default) {
+    backend.swap(data_dump);
     std::apply([&](auto &... items) {
         ((items.dump_data(save_default)), ...);
     },
         CONFIG::tuplify());
-    selected_backend = current_backend;
+    backend.swap(data_dump);
 }
+
 template <class T, class CovertTo>
 void MemConfigItem<T, CovertTo>::set(T new_data) {
     std::unique_lock<FreeRTOS_Mutex> lock(get_item_mutex());
     if (data != new_data) {
+#ifndef EEPROM_UNITTEST
         buddy::DisableInterrupts disable;
+#endif
         data = new_data;
+        // using eeprom access singleton directly, because I don't want to have pointer in every item
+        ConfigurationStore<>::GetStore().template set(key, data);
     }
-    // using eeprom access singleton directly, because I don't want to have pointer in every item
-    ConfigurationStore<>::GetStore().template set(key, data);
 }
 template <class T, class CovertTo>
 T MemConfigItem<T, CovertTo>::get() {
@@ -121,21 +127,25 @@ template <class T, size_t SIZE>
 void MemConfigItem<std::array<T, SIZE>>::set(const std::array<T, SIZE> &new_data) {
     std::unique_lock<FreeRTOS_Mutex> lock(get_item_mutex());
     if (data != new_data) {
+#ifndef EEPROM_UNITTEST
         buddy::DisableInterrupts disable;
+#endif
         data = new_data;
+        // using eeprom access singleton directly, because I don't want to have pointer in every item
+        ConfigurationStore<>::GetStore().template set(key, data);
     }
-    // using eeprom access singleton directly, because I don't want to have pointer in every item
-    ConfigurationStore<>::GetStore().template set(key, data);
 }
 template <class T, size_t SIZE>
 std::array<T, SIZE> MemConfigItem<std::array<T, SIZE>>::get() {
+#ifndef EEPROM_UNITTEST
     buddy::DisableInterrupts disable;
+#endif
     return data;
 }
 
 template <class T, size_t SIZE>
 void MemConfigItem<std::array<T, SIZE>>::dump_data(bool save_default) {
-    if (save_default || (data != def_val)) {
+    if (save_default || check_data()) {
         ConfigurationStore<>::GetStore().template set(key, data);
     }
 }
@@ -144,7 +154,9 @@ void MemConfigItem<std::array<char, SIZE>>::set(const char *new_data) {
     if (strcmp((char *)(data.data()), new_data) != 0) {
         std::unique_lock<FreeRTOS_Mutex> lock(get_item_mutex());
         {
+#ifndef EEPROM_UNITTEST
             buddy::DisableInterrupts disable;
+#endif
             strncpy(data.data(), new_data, SIZE);
         }
         // using eeprom access singleton directly, because I don't want to have pointer in every item
@@ -156,7 +168,9 @@ void MemConfigItem<std::array<char, SIZE>>::set(const std::array<char, SIZE> &ne
     if (data != new_data) {
         std::unique_lock<FreeRTOS_Mutex> lock(get_item_mutex());
         {
+#ifndef EEPROM_UNITTEST
             buddy::DisableInterrupts disable;
+#endif
             data = new_data;
         }
         // using eeprom access singleton directly, because I don't want to have pointer in every item
@@ -165,7 +179,9 @@ void MemConfigItem<std::array<char, SIZE>>::set(const std::array<char, SIZE> &ne
 }
 template <size_t SIZE>
 std::array<char, SIZE> MemConfigItem<std::array<char, SIZE>>::get() {
+#ifndef EEPROM_UNITTEST
     buddy::DisableInterrupts disable;
+#endif
     return data;
 }
 template <size_t SIZE>
@@ -177,6 +193,15 @@ void MemConfigItem<std::array<char, SIZE>>::dump_data(bool save_default) {
     if (save_default || (strcmp(def_val, data.data()) != 0)) {
         ConfigurationStore<>::GetStore().template set(key, data);
     }
+}
+template <class T, size_t SIZE>
+bool MemConfigItem<std::array<T, SIZE>>::check_data() {
+    for (const T &item : data) {
+        if (item != def_val) {
+            return false;
+        }
+    }
+    return true;
 }
 }
 configuration_store::ConfigurationStore<configuration_store::ConfigurationStoreStructure> &config_store();

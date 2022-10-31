@@ -30,6 +30,8 @@ bool has_wrong_x();
 bool has_wrong_y();
 bool has_wrong_z();
 bool has_wrong_e();
+bool get_msc_enabled();
+void set_msc_enabled(bool settings);
 
 /**
  * @brief function set to read float value from eeprom and round it
