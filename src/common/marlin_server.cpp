@@ -55,7 +55,6 @@
     #include "printer_selftest.hpp"
 #endif
 
-#include "SteelSheets.hpp"
 static_assert(MARLIN_VAR_MAX < 64, "MarlinAPI: Too many variables");
 
 #ifdef MINDA_BROKEN_CABLE_DETECTION
@@ -530,7 +529,7 @@ bool marlin_server_inject_gcode(const char *gcode) {
 
 void marlin_server_settings_save(void) {
 #if HAS_BED_PROBE
-    if (!SteelSheets::SetZOffset(probe_offset.z)) {
+    if (!config_store().steel_sheets.get().set_z_offset(probe_offset.z)) {
         assert(0 /* Z offset write failed */);
     }
 #endif
@@ -550,7 +549,7 @@ void marlin_server_settings_save(void) {
 void marlin_server_settings_load(void) {
     (void)settings.reset();
 #if HAS_BED_PROBE
-    probe_offset.z = SteelSheets::GetZOffset();
+    probe_offset.z = config_store().steel_sheets.get().get_z_offset();
 #endif
 #if ENABLED(PIDTEMPBED)
     Temperature::temp_bed.pid.Kp = config_store().pid_bed_p.get();

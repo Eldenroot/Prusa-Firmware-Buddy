@@ -169,17 +169,6 @@ namespace {
         return Printer::DeviceState::Unknown;
     }
 
-    // Extract a fixed-sized string from EEPROM to provided buffer.
-    //
-    // maxlen is the length of the buffer, including the byte for \0.
-    //
-    // FIXME: Unify with the one in wui_api.c
-    void strextract(char *into, size_t maxlen, enum eevar_id var) {
-        variant8_t tmp = eeprom_get_var(var);
-        strlcpy(into, variant8_get_pch(tmp), maxlen);
-        variant8_t *ptmp = &tmp;
-        variant8_done(&ptmp);
-    }
 }
 
 MarlinPrinter::MarlinPrinter(SharedBuffer &buffer)
@@ -255,9 +244,9 @@ Printer::Config MarlinPrinter::load_config() {
     configuration.enabled = config_store().connect_enabled.get();
     if (configuration.enabled) {
         // Just avoiding to read it when disabled, only to save some CPU
-        strextract(configuration.host, sizeof configuration.host, EEVAR_CONNECT_HOST);
+        strncpy(configuration.host, config_store().connect_host.get().data(), config_store().connect_host.size);
         decompress_host(configuration.host, sizeof configuration.host);
-        strextract(configuration.token, sizeof configuration.token, EEVAR_CONNECT_TOKEN);
+        strncpy(configuration.token, config_store().connect_token.get().data(), config_store().connect_token.size);
         configuration.tls = config_store().connect_tls.get();
         configuration.port = config_store().connect_port.get();
     }
@@ -273,8 +262,8 @@ bool MarlinPrinter::load_cfg_from_ini() {
             config.port = config.tls ? 443 : 80;
         }
 
-        eeprom_set_pchar(EEVAR_CONNECT_HOST, config.host, 0, 1);
-        eeprom_set_pchar(EEVAR_CONNECT_TOKEN, config.token, 0, 1);
+        config_store().connect_host.set(config.host);
+        config_store().connect_token.set(config.host);
         config_store().connect_port.set(config.tls);
         config_store().connect_tls.set(config.tls);
         // Note: enabled is controlled in the GUI
@@ -311,8 +300,8 @@ std::optional<Printer::NetInfo> MarlinPrinter::net_info(Printer::Iface iface) co
 
 Printer::NetCreds MarlinPrinter::net_creds() const {
     NetCreds result = {};
-    strextract(result.api_key, sizeof result.api_key, EEVAR_PL_API_KEY);
-    strextract(result.ssid, sizeof result.ssid, EEVAR_WIFI_AP_SSID);
+    strncpy(result.api_key, config_store().pl_api_key.get().data(), config_store().pl_api_key.get().size());
+    strncpy(result.ssid, config_store().wifi_ap_ssid.get().data(), config_store().wifi_ap_ssid.get().size());
     return result;
 }
 

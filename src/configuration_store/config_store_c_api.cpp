@@ -340,3 +340,10 @@ extern "C" void set_rms_current_ma_z(uint16_t current) {
 extern "C" void set_rms_current_ma_e(uint16_t current) {
     set_rms_current_ma(current, config_store().rms_curr_ma_e);
 }
+
+extern "C" bool get_msc_enabled() {
+    return config_store().usb_msc_enabled.get();
+}
+extern "C" void set_msc_enabled(bool settings) {
+    config_store().usb_msc_enabled.set(settings);
+}
